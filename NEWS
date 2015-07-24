@@ -5,3 +5,4 @@ New in 1.0.0:
 
   * List repositories.
   * List repository URLs.
+  * Build package using GNU Autotools.
