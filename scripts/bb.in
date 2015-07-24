@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!@ZSH_CMD@
 # -*- coding: utf-8; tab-width: 2; indent-tabs-mode: nil; sh-basic-offset: 2; sh-indentation: 2; -*- vim:fenc=utf-8:et:sw=2:ts=2:sts=2
 #
 # Copyright (C) 2015 Enrico M. Crisostomo
@@ -25,8 +25,9 @@ set -o nounset
 
 PROGNAME=${0:t}
 PROGDIR=${0:h}
-
-PROGRAMS=( jq curl )
+JQ=@JQ_CMD@
+CURL=@CURL_CMD@
+PROGRAMS=( ${JQ} ${CURL} )
 
 check_health()
 {
@@ -81,7 +82,7 @@ print_names()
 {
   for res in ${PAGES}
   do
-    REPO_NAMES=( ${REPO_NAMES} $(echo ${res} | jq -r '.values[].name') )
+    REPO_NAMES=( ${REPO_NAMES} $(echo ${res} | ${JQ} -r '.values[].name') )
   done
 
   for n in ${REPO_NAMES}
@@ -99,7 +100,7 @@ print_urls()
   do
     REPO_URLS=( ${REPO_URLS} \
                   $(echo ${res} | \
-                       jq -r ".values[].links.clone[] | select(.name==\"${URL_SCHEME}\") | .href") )
+                       ${JQ} -r ".values[].links.clone[] | select(.name==\"${URL_SCHEME}\") | .href") )
   done
 
   for n in ${REPO_URLS}
@@ -157,8 +158,7 @@ check_repository_vars
 : ${URL_SCHEME=https}
 : ${ATTRIBUTE=name}
 
-CURL=(curl -s -f --user ${BITBUCKET_USER}:${BITBUCKET_PASS})
-CURL_HEAD=(${CURL} -I)
+CURL_CMD=(${CURL} -s -f --user ${BITBUCKET_USER}:${BITBUCKET_PASS})
 GETREPO=https://bitbucket.org/api/2.0/repositories/${REPO_OWNER}
 
 typeset -a REPOSITORIES
@@ -170,13 +170,13 @@ NEXT_PAGE=${GETREPO}
 
 while [[ ! -z ${NEXT_PAGE} ]]
 do
-  RESPONSE=$(${CURL} ${NEXT_PAGE}) || {
+  RESPONSE=$(${CURL_CMD} ${NEXT_PAGE}) || {
     >&2 print -- The server returned an error.
     exit 2
   }
 
   PAGES=(${RESPONSE} ${PAGES})
-  NEXT_PAGE=$(echo ${RESPONSE} | jq -r '.next')
+  NEXT_PAGE=$(echo ${RESPONSE} | ${JQ} -r '.next')
   [[ ${NEXT_PAGE} == "null" ]] && NEXT_PAGE=""
 done
 
