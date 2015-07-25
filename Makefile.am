@@ -15,7 +15,7 @@
 #
 ACLOCAL_AMFLAGS = -I m4
 
-dist_doc_DATA  = README.md
+dist_doc_DATA  = README.md README.gnu-build-system
 dist_doc_DATA += AUTHORS COPYING LICENSE NEWS
 
 dist_bin_SCRIPTS = scripts/bb
