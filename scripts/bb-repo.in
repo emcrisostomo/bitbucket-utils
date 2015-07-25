@@ -203,9 +203,18 @@ save_data()
 
 print_names()
 {
+  local REPO_TYPE_FILTER
+
+  if [[ ! -z ${REPO_TYPE} ]]
+  then
+    REPO_TYPE_FILTER="select(.scm==\"${REPO_TYPE}\") |"
+  fi
+
   for res in ${PAGES}
   do
-    REPO_NAMES=( ${REPO_NAMES} $(echo ${res} | ${JQ} -r '.values[].name') )
+    REPO_NAMES=( ${REPO_NAMES} \
+                   $(echo ${res} | \
+                        ${JQ} -r ".values[] | ${REPO_TYPE_FILTER} .name") )
   done
 
   local -i repo_count
@@ -269,7 +278,7 @@ print_urls()
 
 parse_opts()
 {
-  while getopts ":hn:o:s:u" opt
+  while getopts ":hn:o:s:t:u" opt
   do
     case $opt in
       h)
@@ -284,6 +293,9 @@ parse_opts()
         ;;
       s)
         URL_SCHEME=${OPTARG}
+        ;;
+      t)
+        REPO_TYPE=${OPTARG}
         ;;
       u)
         ATTRIBUTE=url
@@ -315,6 +327,7 @@ check_credentials
 check_repository_vars
 
 : ${REPO_PATTERN=.*}
+: ${REPO_TYPE=}
 : ${URL_SCHEME=https}
 : ${ATTRIBUTE=name}
 
