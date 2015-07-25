@@ -25,6 +25,9 @@ set -o nounset
 
 PROGNAME=${0:t}
 PROGDIR=${0:h}
+DATA_DIR=~/.bb.d
+TS_FILE=${DATA_DIR}/timestamp
+CONFIG_FILE=~/.bb.conf
 JQ=@JQ_CMD@
 CURL=@CURL_CMD@
 PROGRAMS=( ${JQ} ${CURL} )
@@ -78,6 +81,78 @@ print_usage()
   print -- "Report bugs to <enrico.m.crisostomo@gmail.com>."
 }
 
+get_curr_time()
+{
+  date +%s
+}
+
+read_timestamp()
+{
+  cat ${TS_FILE}
+}
+
+should_update_data()
+{
+  if [[ ! -f ${TS_FILE} ]]
+  then
+    print 1
+    return
+  fi
+
+  LATEST_TS=$(read_timestamp)
+
+  if (( $(( $(date +%s) - ${LATEST_TS} )) > $((60*5)) ))
+  then
+    print 1
+  else
+    print 0
+  fi
+}
+
+load_data()
+{
+  if (( $(should_update_data) > 0 ))
+  then
+    update_data
+  fi
+
+  load_data_from_files
+}
+
+load_data_from_files()
+{
+  >&2 Unimplemented.
+  return 1
+}
+
+ensure_data_dir()
+{
+    mkdir -p ${DATA_DIR}
+}
+
+update_timestamp()
+{
+  ensure_data_dir
+  print $(get_curr_time) > ${TS_FILE}
+}
+
+update_data()
+{
+  while [[ ! -z ${NEXT_PAGE} ]]
+  do
+    RESPONSE=$(${CURL_CMD} ${NEXT_PAGE}) || {
+      >&2 print -- The server returned an error.
+      exit 2
+    }
+
+    PAGES=(${RESPONSE} ${PAGES})
+    NEXT_PAGE=$(echo ${RESPONSE} | ${JQ} -r '.next')
+    [[ ${NEXT_PAGE} == "null" ]] && NEXT_PAGE=""
+  done
+
+  update_timestamp
+}
+
 print_names()
 {
   for res in ${PAGES}
@@ -114,9 +189,9 @@ print_urls()
 
 check_health
 
-if [[ -f ~/.bb.conf ]]
+if [[ -f ${CONFIG_FILE} ]]
 then
-  . ~/.bb.conf
+  . ${CONFIG_FILE}
 fi
 
 while getopts ":n:o:s:uh" opt
@@ -168,17 +243,7 @@ typeset -a PAGES
 
 NEXT_PAGE=${GETREPO}
 
-while [[ ! -z ${NEXT_PAGE} ]]
-do
-  RESPONSE=$(${CURL_CMD} ${NEXT_PAGE}) || {
-    >&2 print -- The server returned an error.
-    exit 2
-  }
-
-  PAGES=(${RESPONSE} ${PAGES})
-  NEXT_PAGE=$(echo ${RESPONSE} | ${JQ} -r '.next')
-  [[ ${NEXT_PAGE} == "null" ]] && NEXT_PAGE=""
-done
+load_data
 
 case ${ATTRIBUTE} in
   name)
