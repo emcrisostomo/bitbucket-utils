@@ -15,10 +15,10 @@
 #
 ACLOCAL_AMFLAGS = -I m4
 
-dist_doc_DATA  = README.md
+dist_doc_DATA  = README.md README.gnu-build-system
 dist_doc_DATA += AUTHORS COPYING LICENSE NEWS
 
-dist_bin_SCRIPTS = scripts/bb
+dist_bin_SCRIPTS = scripts/bb scripts/bb-repo
 
 dist-hook:
 # The recipe cannot assume a file in $(distdir) is writable.

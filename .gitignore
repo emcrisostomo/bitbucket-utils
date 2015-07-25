@@ -87,3 +87,4 @@ version.texi
 
 # Template files
 scripts/bb
+scripts/bb-repo
