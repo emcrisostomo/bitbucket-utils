@@ -23,7 +23,7 @@ AC_REVISION([$Revision: 1.0.0$])
 AC_CONFIG_SRCDIR([scripts/bb.in])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile scripts/bb])
+AC_CONFIG_FILES([Makefile scripts/bb scripts/bb-repo])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_MACRO_DIR([m4])
 
