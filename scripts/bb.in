@@ -66,7 +66,7 @@ check_repository_vars()
 
 print_usage()
 {
-  print -- "${PROGNAME}"
+  print -- "${PROGNAME} @PACKAGE_VERSION@"
   print
   print -- "Usage:"
   print -- "${PROGNAME} (option)*"
@@ -229,6 +229,42 @@ print_urls()
   done
 }
 
+parse_opts()
+{
+  while getopts ":hn:o:s:u" opt
+  do
+    case $opt in
+      h)
+        print_usage
+        exit 0
+        ;;
+      n)
+        REPO_PATTERN=${OPTARG}
+        ;;
+      o)
+        REPO_OWNER=${OPTARG}
+        ;;
+      s)
+        URL_SCHEME=${OPTARG}
+        ;;
+      u)
+        ATTRIBUTE=url
+        ;;
+      \?)
+        >&2 print -- Invalid option -${OPTARG}.
+        exit 1
+        ;;
+      :)
+        >&2 print -- Missing argument to -${OPTARG}.
+        exit 1
+        ;;
+    esac
+  done
+
+  shift $((OPTIND-1))
+}
+
+# Main routine
 check_health
 
 if [[ -f ${CONFIG_FILE} ]]
@@ -236,37 +272,7 @@ then
   . ${CONFIG_FILE}
 fi
 
-while getopts ":hn:o:s:u" opt
-do
-  case $opt in
-    h)
-      print_usage
-      exit 0
-      ;;
-    n)
-      REPO_PATTERN=${OPTARG}
-      ;;
-    o)
-      REPO_OWNER=${OPTARG}
-      ;;
-    s)
-      URL_SCHEME=${OPTARG}
-      ;;
-    u)
-      ATTRIBUTE=url
-      ;;
-    \?)
-      >&2 print -- Invalid option -${OPTARG}.
-      exit 1
-      ;;
-    :)
-      >&2 print -- Missing argument to -${OPTARG}.
-      exit 1
-      ;;
-  esac
-done
-
-shift $((OPTIND-1))
+parse_opts $*
 
 check_credentials
 check_repository_vars
