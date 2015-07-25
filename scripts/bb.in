@@ -134,6 +134,8 @@ update_data()
 {
   local NEXT_PAGE=$1
 
+  remove_old_data_files $1
+
   while [[ ! -z ${NEXT_PAGE} ]]
   do
     RESPONSE=$(${CURL_CMD} ${NEXT_PAGE}) || {
@@ -166,6 +168,13 @@ load_data_from_files()
 
     PAGES=(${PAGES} "$(cat ${i})")
   done
+}
+
+remove_old_data_files()
+{
+  local REQ_FOLDER=${DATA_DIR}/$(echo $1 | base64)
+
+  rm -rf ${REQ_FOLDER}
 }
 
 save_data()
@@ -227,7 +236,7 @@ then
   . ${CONFIG_FILE}
 fi
 
-while getopts ":n:o:s:uh" opt
+while getopts ":hn:o:s:u" opt
 do
   case $opt in
     h)
