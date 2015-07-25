@@ -101,7 +101,7 @@ should_update_data()
 
   LATEST_TS=$(read_timestamp)
 
-  if (( $(( $(date +%s) - ${LATEST_TS} )) > $((60*5)) ))
+  if (( $(( $(date +%s) - ${LATEST_TS} )) > $((60*60*24)) ))
   then
     print 1
   else
@@ -113,16 +113,10 @@ load_data()
 {
   if (( $(should_update_data) > 0 ))
   then
-    update_data
+    update_data $1
   fi
 
-  load_data_from_files
-}
-
-load_data_from_files()
-{
-  >&2 Unimplemented.
-  return 1
+  load_data_from_files $1
 }
 
 ensure_data_dir()
@@ -138,6 +132,8 @@ update_timestamp()
 
 update_data()
 {
+  local NEXT_PAGE=$1
+
   while [[ ! -z ${NEXT_PAGE} ]]
   do
     RESPONSE=$(${CURL_CMD} ${NEXT_PAGE}) || {
@@ -150,7 +146,44 @@ update_data()
     [[ ${NEXT_PAGE} == "null" ]] && NEXT_PAGE=""
   done
 
+  # Since PAGES is an array, we are passing the variable name instead of the
+  # variable value.
+  save_data $1 PAGES
   update_timestamp
+}
+
+load_data_from_files()
+{
+  local REQ_FOLDER=${DATA_DIR}/$(echo $1 | base64)
+  PAGES=()
+
+  for i in ${REQ_FOLDER}/*
+  do
+    [[ -f ${i} ]] || {
+      >&2 print -- ${i}: unexpected file type.  Skipping
+      continue
+    }
+
+    PAGES=(${PAGES} "$(cat ${i})")
+  done
+}
+
+save_data()
+{
+  local REQ_FOLDER=${DATA_DIR}/$(echo $1 | base64)
+  local -i RES_NUM
+  local -a RESPONSES
+
+  RES_NUM=0
+  RESPONSES=(${(P)${2}})
+
+  mkdir -p ${REQ_FOLDER}
+
+  for res in ${RESPONSES}
+  do
+    echo ${res} > ${REQ_FOLDER}/${RES_NUM}
+    RES_NUM=$((RES_NUM+1))
+  done
 }
 
 print_names()
@@ -241,9 +274,7 @@ typeset -a REPO_NAMES
 typeset -a REPO_URLS
 typeset -a PAGES
 
-NEXT_PAGE=${GETREPO}
-
-load_data
+load_data ${GETREPO}
 
 case ${ATTRIBUTE} in
   name)
