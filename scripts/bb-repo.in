@@ -32,11 +32,11 @@ JQ=@JQ_CMD@
 CURL=@CURL_CMD@
 PROGRAMS=( ${JQ} ${CURL} )
 
-typeset BB_COMMAND
 typeset -a REPOSITORIES
 typeset -a REPO_NAMES
 typeset -a REPO_URLS
 typeset -a PAGES
+typeset REPO_COMMAND
 
 check_health()
 {
@@ -75,14 +75,20 @@ print_usage()
   print -- "${PROGNAME} @PACKAGE_VERSION@"
   print
   print -- "Usage:"
-  print -- "${PROGNAME} repo (option)*"
+  print -- "${PROGNAME} repo (command) (option)*"
   print
+  print -- "Commands:"
+  print --
+  print -- "  help    Show help."
+  print -- "  list    List repositories."
+  print -- "  update  Update indexes."
+  print --
   print -- "Options:"
-  print -- " -h     Show this help."
-  print -- " -n     Specify a repository name pattern."
-  print -- " -o     Specify the repository owner."
-  print -- " -s     Specify the URL scheme."
-  print -- " -u     Print repository URLs."
+  print -- "  -h    Show this help."
+  print -- "  -n    Specify a repository name pattern."
+  print -- "  -o    Specify the repository owner."
+  print -- "  -s    Specify the URL scheme."
+  print -- "  -u    Print repository URLs."
   print
   print -- "Report bugs to <enrico.m.crisostomo@gmail.com>."
 }
@@ -314,6 +320,61 @@ parse_opts()
   shift $((OPTIND-1))
 }
 
+parse_cmd()
+{
+  (( $# > 0 )) || {
+    >&2 print -- Missing command.  Try help.
+    exit 2
+  }
+
+  case $1 in
+    help) ;&
+    list) ;&
+    update)
+      ;;
+    *)
+      >&2 print -- $1: Unknown command.
+      exit 2
+      ;;
+  esac
+
+  REPO_COMMAND=$1
+}
+
+help()
+{
+  print_usage
+}
+
+list()
+{
+  load_data ${GETREPO}
+
+  case ${ATTRIBUTE} in
+    name)
+      print_names
+      ;;
+    url)
+      print_urls
+      ;;
+    *)
+      >&2 print -- Unexpected state.
+      exit 3
+      ;;
+  esac
+}
+
+update()
+{
+  update_data ${GETREPO}
+  exit 2
+}
+
+run_command()
+{
+  eval ${REPO_COMMAND}
+}
+
 # Main routine
 check_health
 
@@ -322,7 +383,10 @@ then
   . ${CONFIG_FILE}
 fi
 
+parse_cmd $*
+shift 1
 parse_opts $*
+
 check_credentials
 check_repository_vars
 
@@ -334,17 +398,4 @@ check_repository_vars
 CURL_CMD=(${CURL} -s -f --user ${BITBUCKET_USER}:${BITBUCKET_PASS})
 GETREPO=https://bitbucket.org/api/2.0/repositories/${REPO_OWNER}
 
-load_data ${GETREPO}
-
-case ${ATTRIBUTE} in
-  name)
-    print_names
-    ;;
-  url)
-    print_urls
-    ;;
-  *)
-    >&2 print -- Unexpected state.
-    exit 3
-    ;;
-esac
+run_command
