@@ -10,6 +10,7 @@ the following features:
   * List repository URLs.
   * Filter repository names using a regular expression.
   * Filter repository URL using a regular expression.
+  * Filter repositories by SCM type.
 
 Prerequisites
 -------------
@@ -66,12 +67,31 @@ Usage
 
 The syntax to invoke `bb` is the following:
 
-    $ bb (options)*
+    $ bb command (options)*
 
-When invoked with no options, `bb` prints the list of repositories of the
-specified *owner*.  Repository URLs can be obtained using the `-u` options.
-Both repository names and URLs can be filtered with a regular expression
-specified using the `-n` option.
+The available commands and their subcommands are:
+
+  * `help`
+  * `repo`
+    - `help`
+    - `list`
+    - `update`
+
+Examples
+--------
+
+The following command lists the repositories of the current user:
+
+    $ bb repo list
+
+The following command lists the repositories URL of the current user:
+
+    $ bb repo list -u
+
+The following command lists the Mercurial repositories whose name starts with
+`prefix`:
+
+    $ bb repo list -n ^prefix -t hg
 
 Bug Reports
 -----------
