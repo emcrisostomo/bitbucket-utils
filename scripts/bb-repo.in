@@ -31,7 +31,12 @@ CONFIG_FILE=~/.bb.conf
 JQ=@JQ_CMD@
 CURL=@CURL_CMD@
 PROGRAMS=( ${JQ} ${CURL} )
+
 typeset BB_COMMAND
+typeset -a REPOSITORIES
+typeset -a REPO_NAMES
+typeset -a REPO_URLS
+typeset -a PAGES
 
 check_health()
 {
@@ -203,13 +208,29 @@ print_names()
     REPO_NAMES=( ${REPO_NAMES} $(echo ${res} | ${JQ} -r '.values[].name') )
   done
 
+  local -i repo_count
+  repo_count=0
+
+  if (( ${#REPO_NAMES} == 0 ))
+  then
+    return 0
+  fi
+
   for n in ${REPO_NAMES}
   do
     if [[ ${n} =~ ${REPO_PATTERN} ]]
     then
       print -- ${n}
+      (( repo_count = repo_count + 1 ))
     fi
   done
+
+  if (( repo_count > 0 ))
+  then
+    return 0
+  else
+    return 1;
+  fi
 }
 
 print_urls()
@@ -221,13 +242,29 @@ print_urls()
                        ${JQ} -r ".values[].links.clone[] | select(.name==\"${URL_SCHEME}\") | .href") )
   done
 
+  local -i repo_count
+  repo_count=0
+
+  if (( ${#REPO_URLS} == 0 ))
+  then
+    return 0
+  fi
+
   for n in ${REPO_URLS}
   do
     if [[ ${n} =~ ${REPO_PATTERN} ]]
     then
       print -- ${n}
+      (( repo_count = repo_count + 1 ))
     fi
   done
+
+  if (( repo_count > 0 ))
+  then
+    return 0
+  else
+    return 1;
+  fi
 }
 
 parse_opts()
@@ -274,7 +311,6 @@ then
 fi
 
 parse_opts $*
-
 check_credentials
 check_repository_vars
 
@@ -284,11 +320,6 @@ check_repository_vars
 
 CURL_CMD=(${CURL} -s -f --user ${BITBUCKET_USER}:${BITBUCKET_PASS})
 GETREPO=https://bitbucket.org/api/2.0/repositories/${REPO_OWNER}
-
-typeset -a REPOSITORIES
-typeset -a REPO_NAMES
-typeset -a REPO_URLS
-typeset -a PAGES
 
 load_data ${GETREPO}
 
