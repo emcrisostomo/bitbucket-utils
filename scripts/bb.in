@@ -61,7 +61,6 @@ parse_cmd()
       ;;
     repo)
       BB_COMMAND=$1
-      shift 1
       ;;
     *)
       >&2 print -- $1: Unknown command.
@@ -76,4 +75,5 @@ invoke_cmd()
 }
 
 parse_cmd $*
-invoke_cmd ${BB_COMMAND}
+shift 1
+invoke_cmd $*
