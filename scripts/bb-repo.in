@@ -26,8 +26,7 @@ set -o nounset
 PROGNAME=${0:t}
 PROGDIR=${0:h}
 DATA_DIR=~/.bb.d
-TS_FILE=${DATA_DIR}/timestamp
-CONFIG_FILE=~/.bb.conf
+TS_FILE=timestamp
 JQ=@JQ_CMD@
 CURL=@CURL_CMD@
 PROGRAMS=( ${JQ} ${CURL} )
@@ -37,6 +36,8 @@ typeset -a REPO_NAMES
 typeset -a REPO_URLS
 typeset -a PAGES
 typeset REPO_COMMAND
+typeset -a BB_CURL_USER
+BB_CURL_USER=()
 
 check_health()
 {
@@ -47,19 +48,6 @@ check_health()
       exit 1
     }
   done
-}
-
-check_credentials()
-{
-  (( ${+BITBUCKET_USER} )) || {
-    >&2 print -- Missing credentials.
-    exit 4
-  }
-
-  (( ${+BITBUCKET_PASS} )) || {
-    >&2 print -- Missing credentials.
-    exit 4
-  }
 }
 
 check_repository_vars()
@@ -88,6 +76,7 @@ print_usage()
   print -- "  -n    Specify a repository name pattern."
   print -- "  -o    Specify the repository owner."
   print -- "  -s    Specify the URL scheme."
+  print -- "  -t    Specify the repository type."
   print -- "  -u    Print repository URLs."
   print
   print -- "Report bugs to <enrico.m.crisostomo@gmail.com>."
@@ -100,18 +89,18 @@ get_curr_time()
 
 read_timestamp()
 {
-  cat ${TS_FILE}
+  cat $1/${TS_FILE}
 }
 
 should_update_data()
 {
-  if [[ ! -f ${TS_FILE} ]]
+  if [[ ! -f $1/${TS_FILE} ]]
   then
     print 1
     return
   fi
 
-  LATEST_TS=$(read_timestamp)
+  local LATEST_TS=$(read_timestamp $1)
 
   if (( $(( $(date +%s) - ${LATEST_TS} )) > $((60*60*24)) ))
   then
@@ -123,12 +112,19 @@ should_update_data()
 
 load_data()
 {
-  if (( $(should_update_data) > 0 ))
+  # User data is stored into
+  #   ~/${DATA_DIR}/${USER_FRAGMENT}/base64-encoded-url
+  # If an anonymous API call is performed, USER_FRAGMENT is set to ".".
+  local USER_FRAGMENT=.
+  [[ ! -z ${BITBUCKET_USER} ]] && USER_FRAGMENT=${BITBUCKET_USER}
+  local REQ_FOLDER=${DATA_DIR}/${USER_FRAGMENT}/$(echo $1 | base64)
+
+  if (( $(should_update_data ${REQ_FOLDER}) > 0 ))
   then
-    update_data $1
+    update_data $1 ${REQ_FOLDER}
   fi
 
-  load_data_from_files $1
+  load_data_from_files ${REQ_FOLDER}
 }
 
 ensure_data_dir()
@@ -139,14 +135,14 @@ ensure_data_dir()
 update_timestamp()
 {
   ensure_data_dir
-  print $(get_curr_time) > ${TS_FILE}
+  print $(get_curr_time) > $1/${TS_FILE}
 }
 
 update_data()
 {
   local NEXT_PAGE=$1
-
-  remove_old_data_files $1
+  PAGES=()
+  remove_old_data_files $2
 
   while [[ ! -z ${NEXT_PAGE} ]]
   do
@@ -162,13 +158,13 @@ update_data()
 
   # Since PAGES is an array, we are passing the variable name instead of the
   # variable value.
-  save_data $1 PAGES
-  update_timestamp
+  save_data $2 PAGES
+  update_timestamp $2
 }
 
 load_data_from_files()
 {
-  local REQ_FOLDER=${DATA_DIR}/$(echo $1 | base64)
+  local REQ_FOLDER=$1
   PAGES=()
 
   for i in ${REQ_FOLDER}/*
@@ -178,20 +174,20 @@ load_data_from_files()
       continue
     }
 
+    [[ ${i:t} == ${TS_FILE} ]] && continue
+
     PAGES=(${PAGES} "$(cat ${i})")
   done
 }
 
 remove_old_data_files()
 {
-  local REQ_FOLDER=${DATA_DIR}/$(echo $1 | base64)
-
-  rm -rf ${REQ_FOLDER}
+  rm -rf $1
 }
 
 save_data()
 {
-  local REQ_FOLDER=${DATA_DIR}/$(echo $1 | base64)
+  local REQ_FOLDER=$1
   local -i RES_NUM
   local -a RESPONSES
 
@@ -378,24 +374,25 @@ run_command()
 # Main routine
 check_health
 
-if [[ -f ${CONFIG_FILE} ]]
-then
-  . ${CONFIG_FILE}
-fi
-
-parse_cmd $*
-shift 1
+parse_cmd $* && shift 1
 parse_opts $*
 
-check_credentials
-check_repository_vars
-
+# Since other options and commands depend on the value of BITBUCKET_USER, we set
+# it to an empty value if it not yet set.
+: ${BITBUCKET_USER=}
+: ${REPO_OWNER=${BITBUCKET_USER}}
 : ${REPO_PATTERN=.*}
 : ${REPO_TYPE=}
 : ${URL_SCHEME=https}
 : ${ATTRIBUTE=name}
 
-CURL_CMD=(${CURL} -s -f --user ${BITBUCKET_USER}:${BITBUCKET_PASS})
+[[ ! -z ${BITBUCKET_USER} ]] && {
+   BB_CURL_USER=(--user ${BITBUCKET_USER}:${BITBUCKET_PASS})
+}
+
+check_repository_vars
+
+CURL_CMD=(${CURL} -s -f ${BB_CURL_USER})
 GETREPO=https://bitbucket.org/api/2.0/repositories/${REPO_OWNER}
 
 run_command

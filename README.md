@@ -57,17 +57,30 @@ Configuration
 `bb` can obtain this information in the following ways:
 
   * From the user configuration file, `~/.bb.conf`.
-  * From command parameters, such as `-o`.
+  * From global options, such as `-p` and `-u`.
+  * From command options, such as `-o`.
   * From environment variables, such as `${REPO_OWNER}`.
 
-A user will typicall store its BitBucket credentials in `~/.bb.conf`.
+A user will typicall store its BitBucket credentials in `~/.bb.conf`, which is
+sourced during `bb` initialization, or set on the user environment by any other
+mean.  The available variables are the following:
+
+  * `BITBUCKET_USER`: the optional BitBucket user used during authenticated API
+    calls with.  If not specified, an anonymous API call is performed.
+  * `BITBUCKET_PASS`: the optional BitBucket user password, used only if
+    `BITBUCKET_USER` is specified.
 
 Usage
 -----
 
 The syntax to invoke `bb` is the following:
 
-    $ bb command (options)*
+    $ bb (global_options)* command (options)*
+
+The available global options are:
+
+  * `-u`: to specify the BitBucket user.
+  * `-p`: to specify the BitBucket user password.
 
 The available commands and their subcommands are:
 
