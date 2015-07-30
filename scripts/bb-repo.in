@@ -32,6 +32,7 @@ CURL=@CURL_CMD@
 PROGRAMS=( ${JQ} ${CURL} )
 REPO_COMMAND=
 
+typeset -i ARGS_PROCESSED=0
 typeset -a REPOSITORIES
 typeset -a REPO_NAMES
 typeset -a REPO_URLS
@@ -331,7 +332,7 @@ parse_opts()
     esac
   done
 
-  shift $((OPTIND-1))
+  ARGS_PROCESSED=$((OPTIND - 1))
 }
 
 parse_cmd()
@@ -353,6 +354,7 @@ parse_cmd()
   esac
 
   REPO_COMMAND=$1
+  ARGS_PROCESSED=1
 }
 
 help()
@@ -392,8 +394,13 @@ run_command()
 # Main routine
 check_health
 
-parse_cmd $* && shift 1
-parse_opts $*
+parse_cmd  $* && shift ${ARGS_PROCESSED}
+parse_opts $* && shift ${ARGS_PROCESSED}
+
+(( $# == 0 )) || {
+  >&2 print -- Unexpected parameter: $*
+  exit 1
+}
 
 # Set default variable values.
 #
