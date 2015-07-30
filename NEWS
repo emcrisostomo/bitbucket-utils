@@ -1,6 +1,11 @@
 NEWS
 ****
 
+New in 1.2.0:
+
+  * Allow anonymous BitBucket API calls.
+  * Maintain per-user reponse cache.
+
 New in 1.1.0:
 
   * Maintain a local cache of BitBucket API responses to speed up multiple
