@@ -17,9 +17,9 @@
 #
 dnl Copyright (C) 2015 Enrico M. Crisostomo
 AC_PREREQ([2.69])
-AC_INIT([bitbucket-utils], [1.1.0], [enrico.m.crisostomo])
+AC_INIT([bitbucket-utils], [1.2.0], [enrico.m.crisostomo])
 AC_COPYRIGHT([2015 (C) Enrico M. Crisostomo])
-AC_REVISION([$Revision: 1.0.0$])
+AC_REVISION([$Revision: 1.1.1$])
 AC_CONFIG_SRCDIR([scripts/bb.in])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_HEADERS([config.h])
