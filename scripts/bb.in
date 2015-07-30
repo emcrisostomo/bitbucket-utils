@@ -32,19 +32,49 @@ JQ=@JQ_CMD@
 CURL=@CURL_CMD@
 PROGRAMS=( ${JQ} ${CURL} )
 typeset BB_COMMAND
+typeset -i ARGS_PROCESSED=0
 
 print_usage()
 {
   print -- "${PROGNAME} @PACKAGE_VERSION@"
   print
   print -- "Usage:"
-  print -- "${PROGNAME} (command) ..."
+  print -- "${PROGNAME} (options)* (command) ..."
+  print
+  print -- "Options:"
+  print -- " -u     BitBucket username."
+  print -- " -p     BitBucket password."
   print
   print -- "Commands:"
   print -- " help   Show this help."
   print -- " repo   Manage repositories."
   print
   print -- "Report bugs to <enrico.m.crisostomo@gmail.com>."
+}
+
+parse_opts()
+{
+  while getopts ":p:u:" opt
+  do
+    case $opt in
+      p)
+        BITBUCKET_PASS=${OPTARG}
+        ;;
+      u)
+        BITBUCKET_USER=${OPTARG}
+        ;;
+      \?)
+        >&2 print -- Invalid option -${OPTARG}.
+        exit 1
+        ;;
+      :)
+        >&2 print -- Missing argument to -${OPTARG}.
+        exit 1
+        ;;
+    esac
+  done
+
+  ARGS_PROCESSED=$((OPTIND - 1))
 }
 
 parse_cmd()
@@ -67,6 +97,8 @@ parse_cmd()
       exit 2
       ;;
   esac
+
+  ARGS_PROCESSED=1
 }
 
 invoke_cmd()
@@ -74,6 +106,17 @@ invoke_cmd()
   ${PROGDIR}/bb-${BB_COMMAND} $*
 }
 
-parse_cmd $*
-shift 1
+# Main routine
+if [[ -f ${CONFIG_FILE} ]]
+then
+  . ${CONFIG_FILE}
+fi
+
+parse_opts $* && shift $((ARGS_PROCESSED))
+parse_cmd  $* && shift $((ARGS_PROCESSED))
+
+export BITBUCKET_USER
+export BITBUCKET_PASS
+export REPO_OWNER
+
 invoke_cmd $*
