@@ -112,8 +112,8 @@ then
   . ${CONFIG_FILE}
 fi
 
-parse_opts $* && shift $((ARGS_PROCESSED))
-parse_cmd  $* && shift $((ARGS_PROCESSED))
+parse_opts $* && shift ${ARGS_PROCESSED}
+parse_cmd  $* && shift ${ARGS_PROCESSED}
 
 export BITBUCKET_USER
 export BITBUCKET_PASS
