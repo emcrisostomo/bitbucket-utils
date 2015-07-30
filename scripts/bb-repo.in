@@ -30,12 +30,12 @@ TS_FILE=timestamp
 JQ=@JQ_CMD@
 CURL=@CURL_CMD@
 PROGRAMS=( ${JQ} ${CURL} )
+REPO_COMMAND=
 
 typeset -a REPOSITORIES
 typeset -a REPO_NAMES
 typeset -a REPO_URLS
 typeset -a PAGES
-typeset REPO_COMMAND
 typeset -a BB_CURL_USER
 BB_CURL_USER=()
 
@@ -92,6 +92,7 @@ read_timestamp()
   cat $1/${TS_FILE}
 }
 
+# $1 Path where the API call is cached.
 should_update_data()
 {
   if [[ ! -f $1/${TS_FILE} ]]
@@ -110,14 +111,25 @@ should_update_data()
   fi
 }
 
-load_data()
+# $1: API request URL.
+get_data_path()
 {
   # User data is stored into
+  #
   #   ~/${DATA_DIR}/${USER_FRAGMENT}/base64-encoded-url
+  #
   # If an anonymous API call is performed, USER_FRAGMENT is set to ".".
   local USER_FRAGMENT=.
   [[ ! -z ${BITBUCKET_USER} ]] && USER_FRAGMENT=${BITBUCKET_USER}
   local REQ_FOLDER=${DATA_DIR}/${USER_FRAGMENT}/$(echo $1 | base64)
+
+  print -- ${REQ_FOLDER}
+}
+
+# $1 API request URL
+load_data()
+{
+  local REQ_FOLDER=$(get_data_path $1)
 
   if (( $(should_update_data ${REQ_FOLDER}) > 0 ))
   then
@@ -132,12 +144,15 @@ ensure_data_dir()
     mkdir -p ${DATA_DIR}
 }
 
+# $1 Path where the API call is cached.
 update_timestamp()
 {
   ensure_data_dir
   print $(get_curr_time) > $1/${TS_FILE}
 }
 
+# $1 API request URL.
+# $2 Path where the API call is cached.
 update_data()
 {
   local NEXT_PAGE=$1
@@ -162,6 +177,7 @@ update_data()
   update_timestamp $2
 }
 
+# $1 Path where the API call is cached.
 load_data_from_files()
 {
   local REQ_FOLDER=$1
@@ -180,11 +196,13 @@ load_data_from_files()
   done
 }
 
+# $1 Path where the API call is cached.
 remove_old_data_files()
 {
   rm -rf $1
 }
 
+# $1 Path where the API call is cached.
 save_data()
 {
   local REQ_FOLDER=$1
@@ -362,7 +380,7 @@ list()
 
 update()
 {
-  update_data ${GETREPO}
+  update_data ${GETREPO} $(get_data_path ${GETREPO})
   exit 2
 }
 
@@ -377,6 +395,8 @@ check_health
 parse_cmd $* && shift 1
 parse_opts $*
 
+# Set default variable values.
+#
 # Since other options and commands depend on the value of BITBUCKET_USER, we set
 # it to an empty value if it not yet set.
 : ${BITBUCKET_USER=}
