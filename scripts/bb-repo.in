@@ -92,7 +92,7 @@ read_timestamp()
   cat $1/${TS_FILE}
 }
 
-# $1 Path where the API call is cached.
+# $1: Path where the API call is cached.
 should_update_data()
 {
   if [[ ! -f $1/${TS_FILE} ]]
@@ -126,7 +126,7 @@ get_data_path()
   print -- ${REQ_FOLDER}
 }
 
-# $1 API request URL
+# $1: API request URL
 load_data()
 {
   local REQ_FOLDER=$(get_data_path $1)
@@ -144,15 +144,15 @@ ensure_data_dir()
     mkdir -p ${DATA_DIR}
 }
 
-# $1 Path where the API call is cached.
+# $1: Path where the API call is cached.
 update_timestamp()
 {
   ensure_data_dir
   print $(get_curr_time) > $1/${TS_FILE}
 }
 
-# $1 API request URL.
-# $2 Path where the API call is cached.
+# $1: API request URL.
+# $2: Path where the API call is cached.
 update_data()
 {
   local NEXT_PAGE=$1
@@ -177,7 +177,7 @@ update_data()
   update_timestamp $2
 }
 
-# $1 Path where the API call is cached.
+# $1: Path where the API call is cached.
 load_data_from_files()
 {
   local REQ_FOLDER=$1
@@ -196,13 +196,13 @@ load_data_from_files()
   done
 }
 
-# $1 Path where the API call is cached.
+# $1: Path where the API call is cached.
 remove_old_data_files()
 {
   rm -rf $1
 }
 
-# $1 Path where the API call is cached.
+# $1: Path where the API call is cached.
 save_data()
 {
   local REQ_FOLDER=$1
