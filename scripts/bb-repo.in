@@ -167,7 +167,7 @@ update_data()
       exit 2
     }
 
-    PAGES=(${RESPONSE} ${PAGES})
+    PAGES=(${PAGES} ${RESPONSE})
     NEXT_PAGE=$(echo ${RESPONSE} | ${JQ} -r '.next')
     [[ ${NEXT_PAGE} == "null" ]] && NEXT_PAGE=""
   done
