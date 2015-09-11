@@ -268,7 +268,7 @@ print_urls()
   for res in ${PAGES}
   do
     REPO_URLS=( ${REPO_URLS} \
-                  $(echo ${res} | \
+                  $(echo -E ${res} | \
                        ${JQ} -r ".values[].links.clone[] | select(.name==\"${URL_SCHEME}\") | .href") )
   done
 
