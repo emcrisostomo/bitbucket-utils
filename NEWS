@@ -1,6 +1,11 @@
 NEWS
 ****
 
+New in 1.2.1:
+
+  * Fix a bug that prevents bb to correctly process BitBucket API responses
+    containing new line characters in a literal JSON string.
+
 New in 1.2.0:
 
   * Allow anonymous BitBucket API calls.
