@@ -1,5 +1,5 @@
 #!@ZSH_CMD@
-# -*- coding: utf-8; tab-width: 2; indent-tabs-mode: nil; sh-basic-offset: 2; sh-indentation: 2; -*- vim:fenc=utf-8:et:sw=2:ts=2:sts=2
+# -*- coding: utf-8; tab-width: 2; indent-tabs-mode: nil; mode: shell-script; eval: (sh-set-shell "zsh"); fill-column: 80; sh-basic-offset: 2; sh-indentation: 2; -*- vim:fenc=utf-8:et:sw=2:ts=2:sts=2
 #
 # Copyright (C) 2015 Enrico M. Crisostomo
 #
@@ -167,8 +167,8 @@ update_data()
       exit 2
     }
 
-    PAGES=(${RESPONSE} ${PAGES})
-    NEXT_PAGE=$(echo ${RESPONSE} | ${JQ} -r '.next')
+    PAGES=(${PAGES} ${RESPONSE})
+    NEXT_PAGE=$(echo -E ${RESPONSE} | ${JQ} -r '.next')
     [[ ${NEXT_PAGE} == "null" ]] && NEXT_PAGE=""
   done
 
@@ -217,7 +217,7 @@ save_data()
 
   for res in ${RESPONSES}
   do
-    echo ${res} > ${REQ_FOLDER}/${RES_NUM}
+    echo -E ${res} > ${REQ_FOLDER}/${RES_NUM}
     RES_NUM=$((RES_NUM+1))
   done
 }
@@ -234,7 +234,7 @@ print_names()
   for res in ${PAGES}
   do
     REPO_NAMES=( ${REPO_NAMES} \
-                   $(echo ${res} | \
+                   $(echo -E ${res} | \
                         ${JQ} -r ".values[] | ${REPO_TYPE_FILTER} .name") )
   done
 
@@ -268,7 +268,7 @@ print_urls()
   for res in ${PAGES}
   do
     REPO_URLS=( ${REPO_URLS} \
-                  $(echo ${res} | \
+                  $(echo -E ${res} | \
                        ${JQ} -r ".values[].links.clone[] | select(.name==\"${URL_SCHEME}\") | .href") )
   done
 
