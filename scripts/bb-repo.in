@@ -168,7 +168,7 @@ update_data()
     }
 
     PAGES=(${PAGES} ${RESPONSE})
-    NEXT_PAGE=$(echo ${RESPONSE} | ${JQ} -r '.next')
+    NEXT_PAGE=$(echo -E ${RESPONSE} | ${JQ} -r '.next')
     [[ ${NEXT_PAGE} == "null" ]] && NEXT_PAGE=""
   done
 
@@ -217,7 +217,7 @@ save_data()
 
   for res in ${RESPONSES}
   do
-    echo ${res} > ${REQ_FOLDER}/${RES_NUM}
+    echo -E ${res} > ${REQ_FOLDER}/${RES_NUM}
     RES_NUM=$((RES_NUM+1))
   done
 }
@@ -234,7 +234,7 @@ print_names()
   for res in ${PAGES}
   do
     REPO_NAMES=( ${REPO_NAMES} \
-                   $(echo ${res} | \
+                   $(echo -E ${res} | \
                         ${JQ} -r ".values[] | ${REPO_TYPE_FILTER} .name") )
   done
 
